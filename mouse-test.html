@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mouse Accuracy Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #f8f8f8, #eaeaea);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-bar h1 {
+            margin: 0;
+            color: #444;
+            font-size: 1.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-links a:hover {
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            color: #444;
+            margin-bottom: 0.5em;
+            margin-top: 80px;
+        }
+
+        #test-container {
+            background: #fff;
+            border: 2px solid #ccc;
+            padding: 2em;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 1000px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        #game-area {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .target {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .target:hover {
+            transform: scale(1.2);
+            background: #ff5252;
+        }
+
+        .target.clicked {
+            background: #4caf50;
+            transform: scale(0.8);
+        }
+
+        #controls {
+            margin: 1rem 0;
+        }
+
+        button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 0.5em 1.5em;
+            margin: 0.5em;
+            font-size: 1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #results {
+            margin-top: 1em;
+            font-size: 1.2em;
+            color: #222;
+            padding: 1rem;
+            background: #f0f0f0;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+            font-size: 1.1em;
+        }
+
+        .stat-item {
+            background: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        #timer {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav-bar">
+        <h1>Mouse Accuracy Test</h1>
+        <div class="nav-links">
+            <a href="index.html">← Back to Typing Test</a>
+        </div>
+    </div>
+
+    <div id="test-container">
+        <div id="stats">
+            <div class="stat-item">
+                <span id="targets-hit">0</span> / <span id="total-targets">0</span> Targets
+            </div>
+            <div class="stat-item">
+                <span id="accuracy">0</span>% Accuracy
+            </div>
+            <div class="stat-item">
+                <span id="avg-time">0</span>ms Avg Time
+            </div>
+        </div>
+
+        <div id="timer">Time: <span id="time-display">0.00</span>s</div>
+
+        <div id="game-area">
+            <!-- Targets will be generated here -->
+        </div>
+
+        <div id="controls">
+            <button onclick="startTest()" id="start-btn">Start Test</button>
+            <button onclick="finishTest()" id="finish-btn" disabled>Finish Test</button>
+            <button onclick="resetTest()" id="reset-btn">Reset</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let targets = [];
+        let clickedTargets = [];
+        let startTime = null;
+        let endTime = null;
+        let clickTimes = [];
+        let testActive = false;
+
+        const gameArea = document.getElementById('game-area');
+        const startBtn = document.getElementById('start-btn');
+        const finishBtn = document.getElementById('finish-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const results = document.getElementById('results');
+        const timeDisplay = document.getElementById('time-display');
+        const targetsHitDisplay = document.getElementById('targets-hit');
+        const totalTargetsDisplay = document.getElementById('total-targets');
+        const accuracyDisplay = document.getElementById('accuracy');
+        const avgTimeDisplay = document.getElementById('avg-time');
+
+        function createTarget() {
+            const target = document.createElement('div');
+            target.className = 'target';
+
+            // Random position within game area bounds
+            const maxX = gameArea.clientWidth - 20;
+            const maxY = gameArea.clientHeight - 20;
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+
+            target.style.left = x + 'px';
+            target.style.top = y + 'px';
+
+            target.addEventListener('click', () => clickTarget(target));
+
+            return target;
+        }
+
+        function clickTarget(target) {
+            if (!testActive || target.classList.contains('clicked')) return;
+
+            const clickTime = Date.now();
+            clickTimes.push(clickTime - startTime);
+
+            target.classList.add('clicked');
+            clickedTargets.push(target);
+
+            updateStats();
+
+            // Create new target after a short delay
+            setTimeout(() => {
+                if (testActive) {
+                    const newTarget = createTarget();
+                    gameArea.appendChild(newTarget);
+                    targets.push(newTarget);
+                }
+            }, 200);
+        }
+
+        function updateStats() {
+            const hit = clickedTargets.length;
+            const total = targets.length;
+            const accuracy = total > 0 ? Math.round((hit / total) * 100) : 0;
+
+            targetsHitDisplay.textContent = hit;
+            totalTargetsDisplay.textContent = total;
+            accuracyDisplay.textContent = accuracy;
+
+            if (clickTimes.length > 0) {
+                const avgTime = Math.round(clickTimes.reduce((a, b) => a + b, 0) / clickTimes.length);
+                avgTimeDisplay.textContent = avgTime;
+            }
+        }
+
+        function startTest() {
+            testActive = true;
+            startTime = Date.now();
+            startBtn.disabled = true;
+            finishBtn.disabled = false;
+            results.style.display = 'none';
+
+            // Clear previous targets
+            gameArea.innerHTML = '';
+            targets = [];
+            clickedTargets = [];
+            clickTimes = [];
+
+            // Create initial targets
+            for (let i = 0; i < 5; i++) {
+                const target = createTarget();
+                gameArea.appendChild(target);
+                targets.push(target);
+            }
+
+            updateStats();
+            updateTimer();
+        }
+
+        function finishTest() {
+            testActive = false;
+            endTime = Date.now();
+            startBtn.disabled = false;
+            finishBtn.disabled = true;
+
+            const totalTime = (endTime - startTime) / 1000;
+            const hit = clickedTargets.length;
+            const total = targets.length;
+            const accuracy = total > 0 ? Math.round((hit / total) * 100) : 0;
+            const avgClickTime = clickTimes.length > 0 ?
+                Math.round(clickTimes.reduce((a, b) => a + b, 0) / clickTimes.length) : 0;
+
+            results.innerHTML = `
+        <h3>🎯 Test Results</h3>
+        <p>⏱️ Total Time: ${totalTime.toFixed(2)} seconds</p>
+        <p>🎯 Targets Hit: ${hit} / ${total}</p>
+        <p>📊 Accuracy: ${accuracy}%</p>
+        <p>⚡ Average Click Time: ${avgClickTime}ms</p>
+        <p>🚀 Clicks per Second: ${totalTime > 0 ? (hit / totalTime).toFixed(2) : 0}</p>
+      `;
+            results.style.display = 'block';
+        }
+
+        function resetTest() {
+            testActive = false;
+            startTime = null;
+            endTime = null;
+            startBtn.disabled = false;
+            finishBtn.disabled = true;
+            results.style.display = 'none';
+
+            gameArea.innerHTML = '';
+            targets = [];
+            clickedTargets = [];
+            clickTimes = [];
+
+            updateStats();
+            timeDisplay.textContent = '0.00';
+        }
+
+        function updateTimer() {
+            if (testActive && startTime) {
+                const currentTime = (Date.now() - startTime) / 1000;
+                timeDisplay.textContent = currentTime.toFixed(2);
+                requestAnimationFrame(updateTimer);
+            }
+        }
+
+        // Initialize
+        resetTest();
+    </script>
+</body>
+
+</html>
