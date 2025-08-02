@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Typing Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #f8f8f8, #eaeaea);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .nav-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .nav-bar h1 {
+      margin: 0;
+      color: #444;
+      font-size: 1.5rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #333;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      transition: background-color 0.2s;
+    }
+
+    .nav-links a:hover {
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      color: #444;
+      margin-bottom: 0.5em;
+      margin-top: 80px;
+    }
+
+    #test-box {
+      background: #fff;
+      border: 2px solid #ccc;
+      padding: 2em;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 800px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #text-display {
+      margin-bottom: 1em;
+      font-size: 1.5em;
+      letter-spacing: 1px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    #text-display span.correct {
+      color: green;
+    }
+
+    #text-display span.incorrect {
+      color: red;
+    }
+
+    #text-display span.current {
+      text-decoration: underline;
+      color: black;
+    }
+
+    #input-box {
+      width: 100%;
+      padding: 0.5em;
+      font-size: 1.2em;
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    #results {
+      margin-top: 1em;
+      font-size: 1.2em;
+      color: #222;
+    }
+
+    button {
+      background: #333;
+      color: white;
+      border: none;
+      padding: 0.5em 1.5em;
+      margin-top: 1em;
+      font-size: 1em;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="nav-bar">
+    <h1>Typing Test</h1>
+    <div class="nav-links">
+      <span id="user-email" style="margin-right: 1rem; color: #666;"></span>
+      <a href="mouse-test.html">Mouse Accuracy Test →</a>
+      <a href="#" onclick="logout()" style="color: #f44; margin-left: 1rem;">Logout</a>
+    </div>
+  </div>
+
+  <button onclick="startTest()">Start Test</button>
+
+  <div id="test-box">
+    <div id="text-display"></div>
+    <input type="text" id="input-box" placeholder="Start typing here..." autocomplete="off" disabled />
+    <div id="results"></div>
+    <button onclick="startTest()">Restart</button>
+  </div>
+
+  <audio id="keySound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3" preload="auto"></audio>
+
+  <script>
+    // Check if user is logged in
+    if (!localStorage.getItem('loggedIn')) {
+      window.location.href = 'login.html';
+    } else {
+      // Display user email in nav
+      const userEmail = localStorage.getItem('userEmail');
+      if (userEmail) {
+        document.getElementById('user-email').textContent = userEmail;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('loggedIn');
+      localStorage.removeItem('userEmail');
+      window.location.href = 'login.html';
+    }
+
+    const wordBank = [
+      "ability", "able", "about", "above", "accept", "according", "account", "across", "act", "action",
+      "activity", "actually", "add", "address", "administration", "admit", "adult", "affect", "after", "again",
+      "against", "age", "agency", "agent", "ago", "agree", "agreement", "ahead", "air", "all",
+      "allow", "almost", "alone", "along", "already", "also", "although", "always", "American", "among",
+      "amount", "analysis", "and", "animal", "another", "answer", "any", "anyone", "anything", "appear",
+      "apply", "approach", "area", "argue", "arm", "around", "arrive", "art", "article", "artist",
+      "ask", "assume", "at", "attack", "attention", "attorney", "audience", "author", "authority", "available",
+      "avoid", "away", "baby", "back", "bag", "ball", "bank", "bar", "base",
+      "be", "beat", "beautiful", "because", "become", "bed", "before", "begin", "behavior", "behind",
+      "believe", "benefit", "best", "better", "between", "beyond", "big", "bill", "billion", "bit",
+      "black", "blood", "blue", "board", "body", "book", "born", "both", "box", "boy",
+      "break", "bring", "brother", "budget", "build", "building", "business", "but", "buy", "by",
+      "call", "camera", "campaign", "can", "candidate", "capital", "car", "card", "care",
+      "career", "carry", "case", "catch", "cause", "cell", "center", "central", "century", "certain",
+      "certainly", "chair", "challenge", "chance", "change", "character", "charge", "check", "child", "choice",
+      "choose", "church", "citizen", "city", "civil", "claim", "class", "clear", "clearly", "close",
+      "coach", "cold", "collection", "college", "color", "come", "commercial", "common", "community", "company",
+      "compare", "computer", "concern", "condition", "conference", "Congress", "consider", "consumer", "contain", "continue",
+      "control", "cost", "could", "country", "couple", "course", "court", "cover", "create", "crime",
+      "cultural", "culture", "cup", "current", "customer", "cut", "dark", "data", "daughter", "day",
+      "deal", "debate", "decade", "decide", "decision", "deep", "defense", "degree",
+      "democrat", "democratic", "describe", "design", "despite", "detail", "determine", "develop", "development",
+      "difference", "different", "difficult", "dinner", "direction", "director", "discover", "discuss", "discussion",
+      "do", "doctor", "dog", "door", "down", "draw", "dream", "drive", "drop",
+      "during", "each", "early", "east", "easy", "eat", "economic", "economy", "edge", "education",
+      "effect", "effort", "eight", "either", "election", "else", "employee", "end", "energy", "enjoy",
+      "enough", "enter", "entire", "environment", "especially", "establish", "even", "evening", "event", "ever",
+      "every", "everyone", "everything", "evidence", "exactly", "example", "executive", "exist", "expect", "experience",
+      "expert", "explain", "eye", "face", "fact", "factor", "fail", "fair", "fall", "family",
+      "far", "fast", "father", "fear", "federal", "feel", "feeling", "few", "field", "fight",
+      "figure", "fill", "film", "final", "financial", "find", "fine", "finger", "finish", "fire",
+      "firm", "first", "fish", "five", "floor", "fly", "focus", "follow", "food", "foot",
+      "for", "force", "foreign", "forget", "form", "former", "forward", "four", "free", "friend",
+      "from", "front", "full", "fund", "future", "game", "garden", "gas", "general", "generation",
+      "get", "girl", "give", "glass", "go", "goal", "good", "government", "great", "green",
+      "ground", "group", "grow", "growth", "guess", "gun", "guy", "hair", "half", "hand",
+      "hang", "happen", "happy", "hard", "have", "he", "head", "health", "hear", "heart",
+      "heat", "heavy", "help", "her", "here", "herself", "high", "him", "himself", "his",
+      "history", "hit", "hold", "home", "hope", "hospital", "hot", "hotel", "hour", "house",
+      "how", "however", "huge", "human", "hundred", "husband", "idea", "identify", "if", "image",
+      "imagine", "impact", "important", "improve", "in", "include", "including", "increase", "indeed", "individual",
+      "industry", "information", "inside", "instead", "institution", "interest", "interesting", "international", "interview", "into",
+      "investment", "involve", "issue", "it", "item", "its", "itself", "job", "join", "just",
+      "keep", "key", "kid", "kill", "kind", "kitchen", "know", "knowledge", "land", "language",
+      "large", "last", "late", "later", "laugh", "law", "lawyer", "lay", "lead", "leader",
+      "learn", "least", "leave", "left", "leg", "legal", "less", "let", "letter", "level",
+      "lie", "life", "light", "like", "likely", "line", "list", "listen", "little", "live",
+      "local", "long", "look", "lose", "loss", "lot", "love", "low", "machine", "magazine",
+      "main", "maintain", "major", "majority", "make", "man", "manage", "management", "manager", "many",
+      "market", "marriage", "material", "matter", "may", "maybe", "me", "mean", "measure", "media",
+      "medical", "meet", "meeting", "member", "memory", "mention", "message", "method", "middle", "might",
+      "mile", "military", "million", "mind", "minute", "miss", "mission", "model", "modern", "moment",
+      "money", "month", "more", "morning", "most", "mother", "mouth", "move", "movement", "movie",
+      "Mr", "Mrs", "much", "music", "must", "my", "myself", "name", "nation", "national",
+      "natural", "nature", "near", "nearly", "necessary", "need", "network", "never", "new", "news",
+      "newspaper", "next", "nice", "night", "no", "none", "north", "not", "note", "nothing",
+      "notice", "now", "number", "occur", "off", "offer", "office", "officer", "official", "often",
+      "oh", "oil", "ok", "old", "on", "once", "one", "only", "onto", "open",
+      "operation", "opportunity", "option", "or", "order", "organization", "other", "others", "our", "out",
+      "outside", "over", "own", "owner", "page", "pain", "painting", "paper", "parent", "part",
+      "participant", "particular", "particularly", "partner", "party", "pass", "past", "patient", "pattern", "pay",
+      "peace", "people", "per", "perform", "performance", "perhaps", "period", "person", "personal", "phone",
+      "physical", "pick", "picture", "piece", "place", "plan", "plant", "play", "player", "PM",
+      "point", "police", "policy", "political", "politics", "poor", "popular", "population", "position", "positive",
+      "possible", "power", "practice", "prepare", "present", "president", "pressure", "pretty", "prevent", "price",
+      "private", "probably", "problem", "process", "produce", "product", "production", "professional", "professor", "program",
+      "project", "property", "protect", "prove", "provide", "public", "pull", "purpose", "push", "put",
+      "quality", "question", "quickly", "quite", "race", "radio", "raise", "range", "rate", "rather",
+      "reach", "read", "ready", "real", "reality", "realize", "really", "reason", "receive", "recent",
+      "recently", "recognize", "record", "red", "reduce", "reflect", "region", "relate", "relationship", "religious",
+      "remain", "remember", "remove", "report", "represent", "Republican", "require", "research", "resource", "respond",
+      "response", "responsibility", "rest", "result", "return", "reveal", "rich", "right", "rise", "risk",
+      "road", "rock", "role", "room", "rule", "run", "safe", "same", "save", "say",
+      "scene", "school", "science", "scientist", "score", "sea", "season", "seat", "second", "section",
+      "security", "see", "seek", "seem", "sell", "send", "senior", "sense", "series", "serious",
+      "serve", "service", "set", "seven", "several", "sex", "sexual", "shake", "share", "she",
+      "shoot", "short", "shot", "should", "shoulder", "show", "side", "sign", "significant", "similar",
+      "simple", "simply", "since", "sing", "single", "sister", "sit", "site", "situation", "six",
+      "size", "skill", "skin", "small", "smile", "so", "social", "society", "soldier", "some",
+      "somebody", "someone", "something", "sometimes", "son", "song", "soon", "sort", "sound", "source",
+      "south", "southern", "space", "speak", "special", "specific", "speech", "spend", "sport", "spring",
+      "staff", "stage", "stand", "standard", "star", "start", "state", "statement", "station", "stay",
+      "step", "still", "stock", "stop", "store", "story", "strategy", "street", "strong", "structure",
+      "student", "study", "stuff", "style", "subject", "success", "successful", "such", "suddenly", "suffer",
+      "suggest", "summer", "support", "sure", "surface", "system", "table", "take", "talk", "task",
+      "tax", "teach", "teacher", "team", "technology", "television", "tell", "ten", "tend", "term",
+      "test", "than", "thank", "that", "the", "their", "them", "themselves", "then", "theory",
+      "there", "these", "they", "thing", "think", "third", "this", "those", "though", "thought",
+      "thousand", "threat", "three", "through", "throughout", "throw", "thus", "time", "to", "today",
+      "together", "tonight", "too", "top", "total", "tough", "toward", "town", "trade", "traditional",
+      "training", "travel", "treat", "treatment", "tree", "trial", "trip", "true", "truth", "try",
+      "turn", "TV", "two", "type", "under", "understand", "unit", "until", "up", "upon",
+      "us", "use", "usually", "value", "various", "very", "victim", "view", "violence", "visit",
+      "voice", "vote", "wait", "walk", "wall", "want", "war", "watch", "water", "way",
+      "we", "weapon", "wear", "week", "weight", "well", "west", "western", "what", "whatever",
+      "when", "where", "whether", "which", "while", "white", "who", "whole", "whom", "whose",
+      "why", "wide", "wife", "will", "win", "wind", "window", "wish", "with", "within",
+      "without", "woman", "wonder", "word", "work", "worker", "world", "worry", "would", "write",
+      "writer", "wrong", "yeah", "year", "yes", "yet", "you", "young", "your", "yourself"
+    ];
+
+
+    function generateRandomText(wordCount = 25) {
+      let text = "";
+      for (let i = 0; i < wordCount; i++) {
+        text += wordBank[Math.floor(Math.random() * wordBank.length)] + " ";
+      }
+      return text.trim();
+    }
+
+    let currentText = "";
+    let charIndex = 0;
+    let correctCount = 0;
+    let totalTyped = 0;
+    let startTime = null;
+    let endTime = null;
+
+    const display = document.getElementById("text-display");
+    const inputBox = document.getElementById("input-box");
+    const results = document.getElementById("results");
+    const keySound = document.getElementById("keySound");
+
+    function startTest() {
+      currentText = generateRandomText();
+      display.innerHTML = currentText.split("").map((c, i) => `<span id="char-${i}">${c}</span>`).join("");
+      inputBox.value = "";
+      inputBox.disabled = false;
+      inputBox.focus();
+      results.innerHTML = "";
+      charIndex = 0;
+      correctCount = 0;
+      totalTyped = 0;
+      startTime = null;
+      endTime = null;
+      updateHighlight();
+    }
+
+    function updateHighlight() {
+      document.querySelectorAll("#text-display span").forEach((span) => span.classList.remove("current"));
+      const currentChar = document.getElementById(`char-${charIndex}`);
+      if (currentChar) currentChar.classList.add("current");
+    }
+
+    function endTest() {
+      inputBox.disabled = true;
+      endTime = new Date();
+      const timeTakenSeconds = (endTime - startTime) / 1000;
+      const timeTakenMinutes = timeTakenSeconds / 60;
+      const wpm = timeTakenMinutes > 0 ? Math.round((correctCount / 5) / timeTakenMinutes) : 0;
+      const accuracy = totalTyped > 0 ? Math.round((correctCount / totalTyped) * 100) : 0;
+      results.innerHTML = `⚡ Speed: ${wpm} WPM<br>🎯 Accuracy: ${accuracy}%<br>⏳ Time: ${timeTakenSeconds.toFixed(2)} seconds`;
+    }
+
+    inputBox.addEventListener("keydown", (e) => {
+      if (!startTime) startTime = new Date();
+
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        keySound.currentTime = 0;
+        keySound.play();
+        totalTyped++;
+        const span = document.getElementById(`char-${charIndex}`);
+        if (charIndex < currentText.length) {
+          span.classList.remove("correct", "incorrect");
+          if (e.key === currentText[charIndex]) {
+            span.classList.add("correct");
+            correctCount++;
+          } else {
+            span.classList.add("incorrect");
+          }
+          charIndex++;
+          updateHighlight();
+
+          if (charIndex >= currentText.length) {
+            endTest();
+          }
+        }
+        e.preventDefault();
+      } else if (e.key === "Backspace" && charIndex > 0) {
+        charIndex--;
+        const span = document.getElementById(`char-${charIndex}`);
+        span.classList.remove("correct", "incorrect");
+        updateHighlight();
+      }
+    });
+  </script>
+</body>
+
+</html>
